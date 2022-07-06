@@ -49,11 +49,6 @@ class NTPException(Exception):
 class NTP:
     """Helper class defining constants."""
 
-    #_SYSTEM_EPOCH = datetime.date(*time.gmtime(0)[0:3])
-    """system epoch"""
-    #_NTP_EPOCH = datetime.date(1900, 1, 1)
-    """NTP epoch"""
-    #NTP_DELTA = (_SYSTEM_EPOCH - _NTP_EPOCH).days * 24 * 3600
     NTP_DELTA = 3155673600
     """delta between system and NTP time"""
 
@@ -126,7 +121,7 @@ class NTPPacket:
     This represents an NTP packet.
     """
 
-    _PACKET_FORMAT = "!BBBbIIIIIIIIIII"
+    _PACKET_FORMAT = "!BBBbIIIIIIIIIfI"
     """packet format to pack/unpack"""
 
     def __init__(self, version=2, mode=3, tx_timestamp=0):
@@ -191,7 +186,7 @@ class NTPPacket:
                 _to_frac(self.recv_timestamp),
                 _to_int(self.tx_timestamp),
                 _to_frac(self.tx_timestamp))
-        except struct.error:
+        except:
             raise NTPException("Invalid NTP packet fields.")
         return packed
 
@@ -208,7 +203,7 @@ class NTPPacket:
         try:
             unpacked = struct.unpack(NTPPacket._PACKET_FORMAT,
                     data[0:struct.calcsize(NTPPacket._PACKET_FORMAT)])
-        except struct.error:
+        except:
             raise NTPException("Invalid NTP packet.")
 
         self.leap = unpacked[0] >> 6 & 0x3
@@ -320,7 +315,7 @@ class NTPClient:
 
             # build the destination timestamp
             dest_timestamp = system_to_ntp_time(time.time())
-        except socket.timeout:
+        except OSError:
             raise NTPException("No response received from %s." % host)
         finally:
             s.close()
